@@ -1,7 +1,7 @@
 // Jira client interface + Jira Cloud REST v3 implementation (design D10).
 //
 // Interface (also implemented by test/fixtures/fake-jira.js):
-//   myself(), getProject(key), searchIssues(jql), getIssue(key), getTransitions(key),
+//   myself(), getProject(key), searchIssues(jql, {limit}), getIssue(key), getTransitions(key),
 //   transition(key, transitionId), addComment(key, text), addRemoteLink(key, {url, title, globalId})
 // Issues are normalised to:
 //   { key, summary, description (ADF|null), status, statusCategory, assignee
@@ -154,7 +154,7 @@ export class JiraCloudClient {
     return this.request('GET', `/project/${encodeURIComponent(key)}`)
   }
 
-  async searchIssues(jql) {
+  async searchIssues(jql, { limit = Number.POSITIVE_INFINITY } = {}) {
     const issues = []
     const seen = new Set()
     let nextPageToken
@@ -162,12 +162,13 @@ export class JiraCloudClient {
       const res = await this.request('POST', '/search/jql', {
         jql,
         fields: ISSUE_FIELDS,
-        maxResults: 100,
+        maxResults: Math.min(100, limit),
         ...(nextPageToken && { nextPageToken }),
       })
       for (const raw of res?.issues ?? []) issues.push(normaliseIssue(raw, this.baseUrl))
       nextPageToken = res?.nextPageToken
       // isLast is unreliable in practice: also stop on a missing or repeated token.
+      if (issues.length >= limit) return issues.slice(0, limit)
       if (res?.isLast || !nextPageToken || seen.has(nextPageToken)) break
       seen.add(nextPageToken)
     }
