@@ -58,7 +58,7 @@
 
 ## 10. Integration
 
-- [ ] 10.1 End-to-end test: `sync` over a fixture Jira (fake client) and a scratch Backlog.md project created with the real `backlog` CLI, covering import -> local status change -> hook write-back -> conflict, and verify it passes in `npm run gates`
+- [x] 10.1 End-to-end test: `sync` over a fixture Jira (fake client) and a scratch Backlog.md project created with the real `backlog` CLI, covering import -> local status change -> hook write-back -> conflict, and verify it passes in `npm run gates`
 - [ ] 10.2 Run the full `npm run gates`, `/review`, `/codex` and `/cso`; fix findings (max 3 rounds); verify all green before the merge into `main`
 
 ## Workflow follow-up
