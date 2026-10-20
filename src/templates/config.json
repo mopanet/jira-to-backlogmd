@@ -1,0 +1,35 @@
+// jira-to-backlogmd configuration (JSON with comments).
+// Secrets never go here: set JIRA_BASE_URL, JIRA_USER_EMAIL and JIRA_API_TOKEN in the environment.
+{
+  "jira": {
+    // The one Jira project to sync. Issue keys must start with "<projectKey>-".
+    "projectKey": "PROJ"
+    // Optional JQL. Default: project = <projectKey> AND statusCategory != Done ORDER BY created ASC
+    // "jql": "project = PROJ AND labels = backlog ORDER BY created ASC"
+  },
+
+  // Backlog.md status -> Jira statuses. The first Jira status is the write-back target;
+  // every listed status is accepted on import. A Jira status may appear only once.
+  "statusMapping": {
+    "To Do": ["To Do", "Backlog", "Selected for Development"],
+    "In Progress": ["In Progress", "In Review"],
+    "Done": ["Done"]
+  },
+
+  // Jira account id or e-mail -> Backlog.md assignee. Unmapped assignees use the Jira display name.
+  "assignees": {
+    // "jane@example.com": "@jane"
+  },
+
+  "sync": {
+    // When both sides changed status since the last sync: backlog-wins | jira-wins | skip
+    "conflictStrategy": "backlog-wins",
+    // The Backlog.md status that means "completed" (final summary is posted on reaching it).
+    "doneStatus": "Done"
+  },
+
+  "backlog": {
+    // The backlog executable, if it is not on PATH as "backlog".
+    "command": "backlog"
+  }
+}

@@ -1,0 +1,106 @@
+#!/usr/bin/env node
+// Fake `backlog` CLI for tests: a JSON-file task store speaking the Backlog.md 1.54 CLI subset
+// the adapter uses. Env: FAKE_BACKLOG_STORE (required), FAKE_BACKLOG_LOG (JSONL call log),
+// FAKE_BACKLOG_FAIL_ON (fail when argv contains this text), FAKE_BACKLOG_VERSION.
+const fs = require('node:fs')
+
+const argv = process.argv.slice(2)
+const storePath = process.env.FAKE_BACKLOG_STORE
+const load = () =>
+  fs.existsSync(storePath)
+    ? JSON.parse(fs.readFileSync(storePath, 'utf8'))
+    : { nextId: 1, tasks: [], config: { autoCommit: 'true' } }
+const save = (s) => fs.writeFileSync(storePath, JSON.stringify(s, null, 2))
+const die = (msg) => {
+  process.stderr.write(`${msg}\n`)
+  process.exit(1)
+}
+
+if (process.env.FAKE_BACKLOG_LOG) {
+  const entry = { argv, origin: process.env.JIRA_TO_BACKLOGMD_ORIGIN ?? null }
+  fs.appendFileSync(process.env.FAKE_BACKLOG_LOG, `${JSON.stringify(entry)}\n`)
+}
+if (process.env.FAKE_BACKLOG_FAIL_ON && argv.join(' ').includes(process.env.FAKE_BACKLOG_FAIL_ON)) {
+  die('boom: simulated failure')
+}
+if (argv[0] === '--version' || argv[0] === '-v') {
+  process.stdout.write(`${process.env.FAKE_BACKLOG_VERSION ?? '1.54.0'}\n`)
+  process.exit(0)
+}
+
+const ALIAS = { '--title': '-t', '--description': '-d', '--status': '-s', '--assignee': '-a' }
+function parse(args) {
+  const opts = { _: [] }
+  const multi = ['-a', '-l', '--labels', '--label', '--ref', '--add-ref']
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i]
+    if (a === '--') {
+      opts._.push(...args.slice(i + 1))
+      break
+    }
+    if (a === '--plain' || a === '--json' || a === '--clear-labels') opts[a] = true
+    else if (a.startsWith('-')) {
+      const v = args[++i]
+      const k = ALIAS[a] ?? a
+      if (multi.includes(k)) (opts[k] ??= []).push(v)
+      else opts[k] = v
+    } else opts._.push(a)
+  }
+  return opts
+}
+const split = (vals) => (vals ?? []).flatMap((v) => v.split(',')).map((v) => v.trim()).filter(Boolean)
+const find = (store, id) => store.tasks.find((t) => t.id.toLowerCase() === String(id).toLowerCase())
+const summary = ({ description, implementationPlan, finalSummary, ...rest }) => rest
+
+const [group, cmd, ...rest] = argv
+const store = load()
+if (group === 'config' && cmd === 'get') {
+  if (store.uninitialised) die('No Backlog.md project found')
+  const v = store.config[rest[0]]
+  process.stdout.write(`${v ?? ''}\n`)
+  process.exit(0)
+}
+if (group !== 'task') die(`unknown command ${group}`)
+const o = parse(rest)
+
+if (cmd === 'list') {
+  const tasks = store.tasks.filter((t) => !t.archived).map(summary)
+  process.stdout.write(JSON.stringify({ schemaVersion: 1, kind: 'task-list', tasks }))
+} else if (cmd === 'view') {
+  const t = find(store, o._[0])
+  if (!t) die(`Task ${o._[0]} not found.`)
+  process.stdout.write(JSON.stringify({ schemaVersion: 1, kind: 'task-view', task: t }))
+} else if (cmd === 'create') {
+  const id = `TASK-${store.nextId++}`
+  const t = {
+    id,
+    title: o._[0],
+    status: o['-s'] ?? 'To Do',
+    archived: false,
+    priority: o['--priority'] ?? null,
+    assignees: split(o['-a']),
+    labels: split(o['-l'] ?? o['--labels']),
+    references: split(o['--ref']),
+    description: o['-d'] ?? null,
+    implementationPlan: null,
+    acceptanceCriteria: [],
+    finalSummary: null,
+  }
+  store.tasks.push(t)
+  save(store)
+  process.stdout.write(`File: /fake/backlog/tasks/${id.toLowerCase()} - ${t.title}.md\n\nTask ${id} - ${t.title}\n`)
+} else if (cmd === 'edit') {
+  const t = find(store, o._[0])
+  if (!t) die(`Task ${o._[0]} not found.`)
+  if (o['-t'] !== undefined) t.title = o['-t']
+  if (o['-d'] !== undefined) t.description = o['-d'].trim()
+  if (o['-s'] !== undefined) t.status = o['-s']
+  if (o['--priority'] !== undefined) t.priority = o['--priority'].toLowerCase()
+  if (o['-a'] !== undefined) t.assignees = split(o['-a'])
+  if (o['--clear-labels']) t.labels = []
+  if (o['--label'] !== undefined) t.labels = split(o['--label'])
+  for (const r of split(o['--add-ref'])) if (!t.references.includes(r)) t.references.push(r)
+  if (o['--final-summary'] !== undefined) t.finalSummary = o['--final-summary']
+  save(store)
+  process.stdout.write(`Task ${t.id} - ${t.title}\n`)
+} else die(`unknown task command ${cmd}`)
