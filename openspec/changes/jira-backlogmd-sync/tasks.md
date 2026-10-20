@@ -24,7 +24,7 @@
 
 ## 4. State store and lock (spec: sync-state)
 
-- [ ] 4.1 Write failing tests for every `sync-state` scenario (record after import, fresh checkout, atomic write via temp+rename, corrupt store, lock contention, stale lock takeover, dangling link reporting), then implement `src/state.js` until they pass
+- [x] 4.1 Write failing tests for every `sync-state` scenario (record after import, fresh checkout, atomic write via temp+rename, corrupt store, lock contention, stale lock takeover, dangling link reporting), then implement `src/state.js` until they pass
 
 ## 5. Jira client and ADF converter
 
