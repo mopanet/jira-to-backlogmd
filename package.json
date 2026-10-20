@@ -1,15 +1,40 @@
 {
   "name": "jira-to-backlogmd",
   "version": "0.0.0",
-  "description": "",
-  "type": "module",
+  "description": "Sync Jira Cloud issues into a Backlog.md project and write status, links and summaries back",
+  "keywords": [
+    "jira",
+    "backlog.md",
+    "sync",
+    "cli"
+  ],
   "license": "MIT",
+  "author": "mopanet",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mopanet/jira-to-backlogmd.git"
+  },
+  "homepage": "https://github.com/mopanet/jira-to-backlogmd#readme",
+  "bugs": {
+    "url": "https://github.com/mopanet/jira-to-backlogmd/issues"
+  },
+  "type": "module",
+  "bin": {
+    "jira-to-backlogmd": "src/cli.js"
+  },
+  "files": [
+    "src/",
+    "SECURITY.md"
+  ],
   "engines": {
     "node": ">=22"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "test": "node --test",
-    "test:cov": "node --test --experimental-test-coverage",
+    "test": "node --test 'test/**/*.test.js'",
+    "test:cov": "node --test --experimental-test-coverage 'test/**/*.test.js'",
     "test:affected": "node scripts/affected-tests.mjs --run",
     "check": "biome check src test",
     "check:affected": "node scripts/affected-tests.mjs --lint",
@@ -18,5 +43,8 @@
     "secrets": "gitleaks dir . --no-banner --redact",
     "gates:dev": "npm run check:affected && npm run test:affected",
     "gates": "npm run check && npm test && npm run secrets && openspec validate --all"
+  },
+  "devDependencies": {
+    "backlog.md": "1.54.0"
   }
 }
