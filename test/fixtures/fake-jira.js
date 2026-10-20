@@ -4,7 +4,10 @@ import { JiraError } from '../../src/jira/client.js'
 
 const BASE = 'https://acme.atlassian.net'
 let clock = Date.parse('2026-10-01T10:00:00Z')
-const tick = () => new Date((clock += 60_000)).toISOString().replace('Z', '+0000')
+const tick = () => {
+  clock += 60_000
+  return new Date(clock).toISOString().replace('Z', '+0000')
+}
 
 export function makeIssue(key, over = {}) {
   return {
