@@ -31,3 +31,15 @@ reverse → T2. When unsure, escalate one tier. A T1 that grows mid-build re-ope
 - Jira is never called from tests: use `test/fixtures/fake-jira.js` (in-memory, plus a `fetch`
   emulator for the Cloud client). Backlog.md is the fake `test/fixtures/bin/backlog`, or the real
   `backlog.md` devDependency in `test/e2e.test.js`.
+
+## Pushing and opening PRs (GitHub access)
+Authenticate with the GitHub CLI — the same way for every contributor, on the host or inside the
+devcontainer:
+
+```bash
+gh auth login          # browser login, or paste a fine-grained token limited to this repo
+gh auth setup-git      # lets `git push` use the gh credentials
+```
+
+Prefer a fine-grained token scoped to this repository (Contents + Pull requests: read/write) over
+a full-account login. Never commit tokens; `.env*` files are git-ignored and CI runs gitleaks.

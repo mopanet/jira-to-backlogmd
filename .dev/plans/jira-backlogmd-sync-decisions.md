@@ -85,3 +85,9 @@ Not fixed, by decision:
 - `stripHtml` is quadratic on adversarial input — a few hundred ms at Jira's field size limit;
 - issues leaving the default JQL when closed in Jira keep their task status — spec says "left
   alone"; noted for a follow-up (e.g. reconcile linked issues outside the JQL).
+
+## After the summary
+
+26. **How GitHub access is granted** (asked the user). Answer: the way every user of the repo can do
+    it. → **`gh auth login` + `gh auth setup-git`**, documented in `.dev/CONTRIBUTING.md`; the
+    host-only `pat-set` helper is not required.
