@@ -1,6 +1,6 @@
 // Regression tests for findings of the pre-landing review (branch feat/jira-backlogmd-sync).
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, test } from 'node:test'
@@ -194,5 +194,35 @@ describe('review: transport and secret hygiene', () => {
     assert.equal(cli.env.JIRA_API_TOKEN, undefined)
     assert.equal(cli.env.JIRA_USER_EMAIL, undefined)
     assert.equal(cli.env.FAKE_BACKLOG_STORE, fb.env.FAKE_BACKLOG_STORE)
+  })
+})
+
+describe('review round 2: progress around conflict comments and lock takeover', () => {
+  test('backlog-wins: a failing conflict comment still records the transition', async () => {
+    const s = setup({
+      issues: [makeIssue('PROJ-7', { status: 'In Progress' })],
+      jira: { fail: { addComment: ['PROJ-7'] } },
+    })
+    await pull(s.ctx)
+    const id = s.fb.tasks()[0].id
+    await s.backlog.editTask(id, { status: 'Done' })
+    s.fake.setStatus('PROJ-7', 'Blocked')
+    const first = await push({ ...s.ctx, state: s.reloadState() })
+    assert.equal(first.failures.length, 1)
+    assert.equal(s.reloadState().get('PROJ-7').lastBacklogStatus, 'Done')
+    await push({ ...s.ctx, state: s.reloadState() })
+    assert.equal(s.fake.transitions.length, 1)
+  })
+
+  test('a takeover mutex left by a crashed run is cleared and the stale lock taken over', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'j2b-rr-'))
+    mkdirSync(join(dir, '.jira-to-backlogmd'))
+    const file = join(dir, LOCK_FILE)
+    writeFileSync(file, JSON.stringify({ pid: 999999, startedAt: new Date().toISOString() }))
+    writeFileSync(`${file}.takeover`, '')
+    const old = new Date(Date.now() - 60_000)
+    utimesSync(`${file}.takeover`, old, old)
+    const lock = await acquireLock(dir, { waitMs: 500, pollMs: 10, isAlive: () => false })
+    lock.release()
   })
 })

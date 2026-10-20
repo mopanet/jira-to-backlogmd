@@ -5,7 +5,6 @@ import {
   closeSync,
   existsSync,
   fsyncSync,
-  linkSync,
   mkdirSync,
   openSync,
   readFileSync,
@@ -165,32 +164,41 @@ function releaseIfOwned(file, token) {
   }
 }
 
+const TAKEOVER_STALE_MS = 10_000
+
 /**
- * Remove a lock judged stale without racing another run doing the same: move it aside
- * atomically, and if what we moved is no longer the lock we judged (another run replaced it
- * meanwhile), put it back unless a newer lock already exists.
+ * Remove a lock judged stale. Takeovers are serialised by a second O_EXCL file, and the lock
+ * is removed only if it still has exactly the content that was judged stale, so a fresh lock
+ * written meanwhile is never deleted. (Residual window: an owner releasing and a new run
+ * re-creating the lock between the re-read and the unlink, i.e. microseconds.)
  */
 function takeOverStale(file, judged) {
-  const aside = `${file}.${randomUUID()}.stale`
+  const mutex = `${file}.takeover`
+  let fd
   try {
-    renameSync(file, aside)
-  } catch {
-    return // already gone: the next O_EXCL attempt decides
-  }
-  let moved
-  try {
-    moved = readFileSync(aside, 'utf8')
-  } catch {
-    moved = undefined
-  }
-  if (judged !== undefined && moved !== judged) {
+    fd = openSync(mutex, 'wx')
+  } catch (e) {
+    if (e.code !== 'EEXIST') throw e
     try {
-      linkSync(aside, file)
+      // A takeover that crashed leaves its mutex behind: clear it once it is clearly old.
+      if (Date.now() - statSync(mutex).mtimeMs > TAKEOVER_STALE_MS) rmSync(mutex, { force: true })
     } catch {
-      // a newer lock exists: it wins
+      // vanished meanwhile
     }
+    return
   }
-  rmSync(aside, { force: true })
+  try {
+    closeSync(fd)
+    let current
+    try {
+      current = readFileSync(file, 'utf8')
+    } catch {
+      return // already gone: the next O_EXCL attempt decides
+    }
+    if (judged !== undefined && current === judged) rmSync(file, { force: true })
+  } finally {
+    rmSync(mutex, { force: true })
+  }
 }
 
 /**

@@ -41,8 +41,8 @@ async function comment(ctx, key, text) {
   else await ctx.jira.addComment(key, text)
 }
 
-/** Status part; returns the updated record fields. */
-async function syncStatus(ctx, record, task, issue) {
+/** Status part; returns the updated record fields (`persist` records progress mid-way). */
+async function syncStatus(ctx, record, task, issue, persist) {
   const { config, backlog, logger, dryRun } = ctx
   const next = {}
   if (task.status === record.lastBacklogStatus) return next
@@ -64,6 +64,8 @@ async function syncStatus(ctx, record, task, issue) {
   switch (config.sync.conflictStrategy) {
     case 'backlog-wins':
       await transitionTo(ctx, issue, targets[0])
+      // Record the transition before the comment, so a failing comment never repeats it.
+      persist({ lastBacklogStatus: task.status, lastJiraStatus: targets[0] })
       await comment(
         ctx,
         issue.key,
@@ -152,7 +154,7 @@ export async function push(ctx) {
       }
       let statusError
       try {
-        persist(await syncStatus({ ...ctx, dryRun }, record, task, issue))
+        persist(await syncStatus({ ...ctx, dryRun }, record, task, issue, persist))
       } catch (e) {
         if (!(e instanceof ItemError)) throw e
         statusError = e
