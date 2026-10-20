@@ -39,9 +39,9 @@
 
 ## 7. Write-back: Backlog.md -> Jira (spec: jira-writeback)
 
-- [ ] 7.1 Write failing tests for the status scenarios (transition on change, completion, no-op on mapped status, missing direct transition reported) then implement the status part of `src/sync/push.js` until they pass
-- [ ] 7.2 Write failing tests for remote links (PR link, repeated run idempotent, own browse URL excluded) and the final-summary comment (posted once, none without summary, no repeat on re-run), then implement until they pass
-- [ ] 7.3 Write failing tests for conflict detection and the three strategies (`backlog-wins` with explanatory comment, `jira-wins`, `skip`) plus per-task failure isolation, then implement until they pass
+- [x] 7.1 Write failing tests for the status scenarios (transition on change, completion, no-op on mapped status, missing direct transition reported) then implement the status part of `src/sync/push.js` until they pass
+- [x] 7.2 Write failing tests for remote links (PR link, repeated run idempotent, own browse URL excluded) and the final-summary comment (posted once, none without summary, no repeat on re-run), then implement until they pass
+- [x] 7.3 Write failing tests for conflict detection and the three strategies (`backlog-wins` with explanatory comment, `jira-wins`, `skip`) plus per-task failure isolation, then implement until they pass
 - [ ] 7.4 Wire `push`, `sync` (pull then push under one lock) and `hook` (targeted write-back, exit 0 on unlinked task or import origin) into `src/cli.js` and verify the corresponding `sync-cli` scenario tests pass
 
 ## 8. Operator commands (spec: sync-cli)
