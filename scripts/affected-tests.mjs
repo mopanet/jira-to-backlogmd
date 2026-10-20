@@ -66,12 +66,17 @@ const changed = new Set();
 for (const rel of sources.flatMap(lines)) changed.add(resolve(root, rel));
 
 // ---- index every test file and its imports ----
-const allTests = lines(
-  sh("git ls-files '*.test.js' '*.test.mjs' '*.test.ts' '*.test.jsx' '*.test.tsx'"),
-).map((r) => resolve(root, r));
-const allSrc = lines(sh("git ls-files 'src/*' 'app/*' 'lib/*' 'components/*'"))
-  .map((r) => resolve(root, r))
-  .filter((f) => SRC_RE.test(f));
+// Tracked + untracked (not ignored), minus files deleted in the working tree.
+const listFiles = (patterns) =>
+  [
+    ...new Set(
+      lines(
+        sh(`git ls-files --cached --others --exclude-standard ${patterns}`),
+      ).map((r) => resolve(root, r)),
+    ),
+  ].filter((f) => existsSync(f));
+const allTests = listFiles("'*.test.js' '*.test.mjs' '*.test.ts' '*.test.jsx' '*.test.tsx'");
+const allSrc = listFiles("'src/*' 'app/*' 'lib/*' 'components/*'").filter((f) => SRC_RE.test(f));
 
 const IMPORT_RE = /(?:import|export)[^'"]*?from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]/g;
 function importsOf(file) {
@@ -109,7 +114,7 @@ for (const t of allTests) {
 // --lint: run biome only on the CHANGED lintable files (not the whole project),
 // so the dev gate never fails on pre-existing issues in files you did not touch.
 if (process.argv.includes('--lint')) {
-  const lintFiles = [...changed].filter((f) => SRC_RE.test(f)).map((f) => f.slice(root.length + 1));
+  const lintFiles = [...changed].filter((f) => SRC_RE.test(f) && existsSync(f)).map((f) => f.slice(root.length + 1));
   if (!lintFiles.length) {
     console.error('affected-tests: no changed files to lint');
     process.exit(0);
