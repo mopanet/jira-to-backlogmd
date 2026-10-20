@@ -34,7 +34,7 @@
 
 ## 6. Import: Jira -> Backlog.md (spec: jira-import)
 
-- [ ] 6.1 Write failing tests for every `jira-import` scenario (create, no-duplicate re-run, field mapping incl. browse-URL reference, changed-field re-apply, Backlog-owned sections untouched, no write when unchanged, origin marker on status edits, out-of-scope issue left alone, per-issue failure isolation) using `FakeJiraClient` and the fake `backlog`, then implement `src/sync/pull.js` until they pass
+- [x] 6.1 Write failing tests for every `jira-import` scenario (create, no-duplicate re-run, field mapping incl. browse-URL reference, changed-field re-apply, Backlog-owned sections untouched, no write when unchanged, origin marker on status edits, out-of-scope issue left alone, per-issue failure isolation) using `FakeJiraClient` and the fake `backlog`, then implement `src/sync/pull.js` until they pass
 - [ ] 6.2 Wire `pull` and `pull --dry-run` into `src/cli.js` and verify the `sync-cli` "Dry pull" scenario test passes
 
 ## 7. Write-back: Backlog.md -> Jira (spec: jira-writeback)
