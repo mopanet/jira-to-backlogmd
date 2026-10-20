@@ -6,10 +6,10 @@
 
 ## 1. Spikes (throwaway, findings recorded in design.md)
 
-- [ ] 1.1 Install Backlog.md on the devcontainer, create a scratch project and verify which actions fire the global `onStatusChange` callback (CLI edit, web UI, MCP, direct file edit, `git pull`) and whether the callback inherits the parent's environment; record the matrix in design.md Risks
-- [ ] 1.2 Verify `backlog task edit` with a 20 KB multi-line Markdown description containing quotes, `#`, `:` and backticks round-trips through `task view --json`; record the safe argv form or the fallback in design.md D1
-- [ ] 1.3 Verify where a `Done` task lives after completion/archiving (`backlog/tasks`, `completed`, `archive`) and that `task view <id> --json` still resolves it; record the behaviour and the pinned Backlog.md version in design.md
-- [ ] 1.4 Verify whether `task edit` preserves unknown frontmatter keys and whether `references` can be appended via the CLI; record in design.md D3
+- [x] 1.1 Install Backlog.md on the devcontainer, create a scratch project and verify which actions fire the global `onStatusChange` callback (CLI edit, web UI, MCP, direct file edit, `git pull`) and whether the callback inherits the parent's environment; record the matrix in design.md Risks
+- [x] 1.2 Verify `backlog task edit` with a 20 KB multi-line Markdown description containing quotes, `#`, `:` and backticks round-trips through `task view --json`; record the safe argv form or the fallback in design.md D1
+- [x] 1.3 Verify where a `Done` task lives after completion/archiving (`backlog/tasks`, `completed`, `archive`) and that `task view <id> --json` still resolves it; record the behaviour and the pinned Backlog.md version in design.md
+- [x] 1.4 Verify whether `task edit` preserves unknown frontmatter keys and whether `references` can be appended via the CLI; record in design.md D3
 
 ## 2. Scaffolding and configuration (spec: sync-config)
 
