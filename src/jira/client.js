@@ -18,6 +18,11 @@ export const ISSUE_FIELDS = [
 ]
 const KEY_RE = /^[A-Z][A-Z0-9_]+-\d+$/
 const MAX_PAGES = 1000
+const REQUEST_TIMEOUT_MS = 30_000
+const MAX_RETRY_AFTER_MS = 60_000
+// Non-idempotent POSTs: after a lost response or a 5xx they may already be applied, so only a
+// 429 (rejected before processing) is retried. Remote links are idempotent via globalId.
+const NO_BLIND_RETRY = /\/(comment|transitions)$/
 
 export class JiraError extends Error {
   constructor(message, { status, method, path } = {}) {
@@ -99,6 +104,7 @@ export class JiraCloudClient {
 
   async request(method, path, body) {
     const url = `${this.baseUrl}/rest/api/3${path}`
+    const rateLimitOnly = method === 'POST' && NO_BLIND_RETRY.test(path)
     const headers = { Authorization: this.auth, Accept: 'application/json' }
     if (body !== undefined) headers['Content-Type'] = 'application/json'
     for (let attempt = 0; ; attempt++) {
@@ -109,9 +115,10 @@ export class JiraCloudClient {
           method,
           headers,
           body: body === undefined ? undefined : JSON.stringify(body),
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         })
       } catch (e) {
-        if (attempt < this.maxRetries) {
+        if (!rateLimitOnly && attempt < this.maxRetries) {
           await this.sleep(500 * 2 ** attempt)
           continue
         }
@@ -121,11 +128,13 @@ export class JiraCloudClient {
         const text = await res.text()
         return text ? JSON.parse(text) : null
       }
-      const retryable = res.status === 429 || res.status >= 500
+      const retryable = res.status === 429 || (res.status >= 500 && !rateLimitOnly)
       if (retryable && attempt < this.maxRetries) {
         const retryAfter = Number(res.headers.get('retry-after'))
         await this.sleep(
-          res.status === 429 && retryAfter > 0 ? retryAfter * 1000 : 500 * 2 ** attempt,
+          res.status === 429 && retryAfter > 0
+            ? Math.min(retryAfter * 1000, MAX_RETRY_AFTER_MS)
+            : 500 * 2 ** attempt,
         )
         continue
       }

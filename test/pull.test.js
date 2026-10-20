@@ -224,7 +224,7 @@ describe('jira-import: scope and failures', () => {
       makeIssue(`PROJ-${i + 1}`, { summary: i === 4 ? 'BREAKME' : `Issue ${i + 1}` }),
     )
     const s = setup({ issues })
-    s.fb.env.FAKE_BACKLOG_FAIL_ON = 'BREAKME'
+    s.backlog.env.FAKE_BACKLOG_FAIL_ON = 'BREAKME'
     const res = await pull(s.ctx)
     assert.equal(s.fb.tasks().length, 9)
     assert.equal(res.failures.length, 1)

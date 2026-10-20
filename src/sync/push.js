@@ -90,7 +90,7 @@ async function syncStatus(ctx, record, task, issue) {
   }
 }
 
-async function syncLinks(ctx, record, task, issue) {
+async function syncLinks(ctx, record, task, issue, onLinked) {
   const linked = new Set(record.linkedUrls)
   const own = issue.browseUrl.toLowerCase()
   for (const url of task.references ?? []) {
@@ -99,8 +99,8 @@ async function syncLinks(ctx, record, task, issue) {
     if (ctx.dryRun) ctx.logger.out(`would add remote link to ${issue.key}: ${url}`)
     else await ctx.jira.addRemoteLink(issue.key, link)
     linked.add(url)
+    onLinked([...linked])
   }
-  return [...linked]
 }
 
 async function syncSummary(ctx, record, task, issue, status) {
@@ -138,24 +138,37 @@ export async function push(ctx) {
         )
         continue
       }
-      const next = { ...record }
+      // Persist after every Jira write, so a later failure never makes a re-run repeat it.
+      let current = { ...record }
+      const persist = (patch) => {
+        const next = { ...current, ...patch }
+        if (JSON.stringify(next) === JSON.stringify(current)) return
+        current = next
+        if (dryRun) logger.out(`would update the store for ${label}`)
+        else {
+          state.set(current)
+          state.save()
+        }
+      }
       let statusError
       try {
-        Object.assign(next, await syncStatus({ ...ctx, dryRun }, record, task, issue))
+        persist(await syncStatus({ ...ctx, dryRun }, record, task, issue))
       } catch (e) {
         if (!(e instanceof ItemError)) throw e
         statusError = e
       }
-      next.linkedUrls = await syncLinks({ ...ctx, dryRun }, record, task, issue)
-      const status = statusError ? record.lastBacklogStatus : next.lastBacklogStatus
-      next.summaryPosted = await syncSummary({ ...ctx, dryRun }, record, task, issue, status)
-
-      const changed = JSON.stringify(next) !== JSON.stringify(record)
-      if (changed && dryRun) logger.out(`would update the store for ${label}`)
-      else if (changed) {
-        state.set(next)
-        state.save()
-      }
+      await syncLinks({ ...ctx, dryRun }, record, task, issue, (linkedUrls) =>
+        persist({ linkedUrls }),
+      )
+      persist({
+        summaryPosted: await syncSummary(
+          { ...ctx, dryRun },
+          record,
+          task,
+          issue,
+          current.lastBacklogStatus,
+        ),
+      })
       if (statusError) throw statusError
     } catch (e) {
       failures.push({ key: label, message: e.message })

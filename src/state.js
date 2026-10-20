@@ -5,6 +5,7 @@ import {
   closeSync,
   existsSync,
   fsyncSync,
+  linkSync,
   mkdirSync,
   openSync,
   readFileSync,
@@ -36,6 +37,7 @@ export class LockError extends Error {
 }
 
 const STRING_FIELDS = ['taskId', 'issueKey', 'lastBacklogStatus', 'lastJiraStatus']
+const ISSUE_KEY_RE = /^[A-Z][A-Z0-9_]+-\d+$/
 
 function normalise(r) {
   return {
@@ -117,6 +119,19 @@ export function loadState(projectDir) {
     Array.isArray(data.links) &&
     data.links.every((r) => STRING_FIELDS.every((k) => typeof r?.[k] === 'string'))
   if (!valid) throw new StateError(`sync state ${file} is corrupt (unexpected structure)`)
+  const seen = new Set()
+  for (const r of data.links) {
+    // Ids are passed to the backlog CLI as arguments: never let one look like an option.
+    if (r.taskId.startsWith('-') || !ISSUE_KEY_RE.test(r.issueKey)) {
+      throw new StateError(`sync state ${file} is corrupt (invalid link ${r.taskId} ${r.issueKey})`)
+    }
+    for (const k of [`task:${r.taskId.toLowerCase()}`, `issue:${r.issueKey}`]) {
+      if (seen.has(k)) {
+        throw new StateError(`sync state ${file} is corrupt (duplicate ${k.replace(':', ' ')})`)
+      }
+      seen.add(k)
+    }
+  }
   return new State(file, data.links)
 }
 
@@ -151,6 +166,34 @@ function releaseIfOwned(file, token) {
 }
 
 /**
+ * Remove a lock judged stale without racing another run doing the same: move it aside
+ * atomically, and if what we moved is no longer the lock we judged (another run replaced it
+ * meanwhile), put it back unless a newer lock already exists.
+ */
+function takeOverStale(file, judged) {
+  const aside = `${file}.${randomUUID()}.stale`
+  try {
+    renameSync(file, aside)
+  } catch {
+    return // already gone: the next O_EXCL attempt decides
+  }
+  let moved
+  try {
+    moved = readFileSync(aside, 'utf8')
+  } catch {
+    moved = undefined
+  }
+  if (judged !== undefined && moved !== judged) {
+    try {
+      linkSync(aside, file)
+    } catch {
+      // a newer lock exists: it wins
+    }
+  }
+  rmSync(aside, { force: true })
+}
+
+/**
  * Exclusive run lock: O_EXCL create of a file holding pid + start time. Waits up to
  * `waitMs`; a lock whose pid is dead or that is older than `maxAgeMs` is taken over.
  */
@@ -179,8 +222,10 @@ export async function acquireLock(
     }
     let holder = {}
     let since
+    let raw
     try {
-      holder = JSON.parse(readFileSync(file, 'utf8'))
+      raw = readFileSync(file, 'utf8')
+      holder = JSON.parse(raw)
       since = Date.parse(holder.startedAt)
     } catch {
       // Unreadable or half-written lock (its creator may still be writing): age by mtime.
@@ -195,7 +240,7 @@ export async function acquireLock(
     const stale =
       (Number.isInteger(holder.pid) && !isAlive(holder.pid)) || Date.now() - since > maxAgeMs
     if (stale) {
-      rmSync(file, { force: true })
+      takeOverStale(file, raw)
       continue
     }
     if (Date.now() >= deadline) {

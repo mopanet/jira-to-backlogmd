@@ -34,6 +34,10 @@ function parse(args) {
   const multi = ['-a', '-l', '--labels', '--label', '--ref', '--add-ref']
   for (let i = 0; i < args.length; i++) {
     const a = args[i]
+    if (a === '--') {
+      opts._.push(...args.slice(i + 1))
+      break
+    }
     if (a === '--plain' || a === '--json' || a === '--clear-labels') opts[a] = true
     else if (a.startsWith('-')) {
       const v = args[++i]

@@ -56,6 +56,17 @@ function findSecretKeys(value, path, found) {
   return found
 }
 
+// Credentials travel with every request: never over plain http except to a loopback test server.
+function isSafeBaseUrl(value) {
+  try {
+    const u = new URL(value)
+    if (u.protocol === 'https:') return true
+    return u.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(u.hostname)
+  } catch {
+    return false
+  }
+}
+
 /**
  * Validate raw config + env. Returns every problem at once; `config` is only
  * meaningful when `errors` is empty.
@@ -73,8 +84,10 @@ export function validateConfig(raw, env = process.env) {
   for (const name of SECRET_ENV) {
     if (!env[name]) errors.push(`environment variable ${name} is not set`)
   }
-  if (env.JIRA_BASE_URL && !/^https?:\/\/[^/\s]+/.test(env.JIRA_BASE_URL)) {
-    errors.push('environment variable JIRA_BASE_URL must be an http(s) URL')
+  if (env.JIRA_BASE_URL && !isSafeBaseUrl(env.JIRA_BASE_URL)) {
+    errors.push(
+      'environment variable JIRA_BASE_URL must be an https URL (plain http only for localhost/127.0.0.1)',
+    )
   }
 
   const jira = isObject(cfg.jira) ? cfg.jira : {}

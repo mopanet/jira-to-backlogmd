@@ -184,7 +184,18 @@ supported yet. `doctor` reports a missing permission on the transitions check.
   agents read. The converter drops raw HTML, HTML comments and `<script>` content and only keeps
   `http(s)`/`mailto` links, but the remaining text is still arbitrary: do not let agents treat task
   descriptions as instructions.
-- The token never goes into the config file or the logs. See [SECURITY.md](SECURITY.md).
+- The token never goes into the config file or the logs, and is not passed on to the `backlog`
+  process. `JIRA_BASE_URL` must be `https://` (plain `http://` is accepted only for
+  `localhost`/`127.0.0.1` test servers). See [SECURITY.md](SECURITY.md).
+
+## Delivery guarantees
+
+- Every run is idempotent: links, statuses and posted summaries are recorded in the state file after
+  each Jira write, so a failed run is simply repeated.
+- Comments and transitions are not retried after a timeout or a 5xx (they may already have been
+  applied); the next run re-evaluates them. In the rare case that Jira applied a comment but the
+  response was lost, the summary comment can appear twice (at-least-once).
+- `--dry-run` takes no lock and only reads; its plan can be stale if a real run is in progress.
 
 ## Development
 

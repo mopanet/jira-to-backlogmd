@@ -55,7 +55,8 @@ describe('backlog-cli: writes', () => {
     assert.equal(t.priority, 'high')
     assert.deepEqual(t.references, ['https://acme.atlassian.net/browse/PROJ-7'])
     const [call] = fb.calls()
-    assert.deepEqual(call.argv.slice(0, 3), ['task', 'create', 'Fix "login"; rm -rf /'])
+    assert.deepEqual(call.argv.slice(0, 2), ['task', 'create'])
+    assert.deepEqual(call.argv.slice(-2), ['--', 'Fix "login"; rm -rf /'])
   })
 
   test('editTask maps changes to flags; empty lists clear', async () => {

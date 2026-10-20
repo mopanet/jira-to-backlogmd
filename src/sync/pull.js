@@ -2,8 +2,8 @@
 import { reverseStatus } from '../config.js'
 import { adfToMarkdown } from '../jira/adf.js'
 
-// Linux caps a single argv element at 128 KiB; stay well below it.
-const MAX_DESCRIPTION = 100_000
+// Linux caps a single argv element at 128 KiB (bytes, not characters); stay well below it.
+const MAX_DESCRIPTION_BYTES = 100_000
 const PRIORITIES = { highest: 'high', high: 'high', medium: 'medium', low: 'low', lowest: 'low' }
 
 function assigneeFor(issue, config) {
@@ -19,8 +19,15 @@ function assigneeFor(issue, config) {
 
 function descriptionFor(issue) {
   const md = adfToMarkdown(issue.description)
-  if (md.length <= MAX_DESCRIPTION) return md
-  return `${md.slice(0, MAX_DESCRIPTION)}\n\n[Truncated: the full description is in ${issue.browseUrl}]`
+  if (Buffer.byteLength(md) <= MAX_DESCRIPTION_BYTES) return md
+  let bytes = 0
+  let cut = ''
+  for (const ch of md) {
+    bytes += Buffer.byteLength(ch)
+    if (bytes > MAX_DESCRIPTION_BYTES) break
+    cut += ch
+  }
+  return `${cut}\n\n[Truncated: the full description is in ${issue.browseUrl}]`
 }
 
 /** The Jira-owned task fields for an issue; `status` is undefined when unmapped. */
@@ -98,7 +105,13 @@ export async function pull({ config, jira, backlog, state, logger, dryRun = fals
         continue
       }
 
-      if (issue.updated && issue.updated === link.jiraUpdated) {
+      // Shortcut only when nothing is pending: a status change deferred to the write-back
+      // (conflict skipped or failed) is re-evaluated even if Jira did not change again.
+      if (
+        issue.updated &&
+        issue.updated === link.jiraUpdated &&
+        issue.status === link.lastJiraStatus
+      ) {
         counts.unchanged++
         continue
       }

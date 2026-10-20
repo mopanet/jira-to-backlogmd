@@ -17,7 +17,9 @@ export class BacklogCli {
   constructor({ command = 'backlog', cwd, env = process.env, timeoutMs = 60_000 } = {}) {
     this.command = command
     this.cwd = cwd
-    this.env = env
+    // The backlog CLI, and the hooks it starts for our own writes, never need Jira credentials.
+    const { JIRA_API_TOKEN: _t, JIRA_USER_EMAIL: _e, ...childEnv } = env
+    this.env = childEnv
     this.timeoutMs = timeoutMs
   }
 
@@ -84,14 +86,15 @@ export class BacklogCli {
   }
 
   async createTask({ title, description, status, assignees, labels, priority, references }) {
-    const args = ['task', 'create', title]
+    const args = ['task', 'create']
     if (description) args.push('--description', description)
     if (status) args.push('--status', status)
     args.push('--assignee', (assignees ?? []).join(','))
     if (labels?.length) args.push('--labels', labels.join(','))
     if (priority) args.push('--priority', priority)
     for (const ref of references ?? []) args.push('--ref', ref)
-    args.push('--plain')
+    // "--" so a Jira summary such as "-h" or "--status=Done" is taken literally.
+    args.push('--plain', '--', title)
     const out = await this.run(args, { write: true })
     const m = out.match(/^Task (\S+) - /m)
     if (!m)
