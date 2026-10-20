@@ -23,3 +23,11 @@ reverse → T2. When unsure, escalate one tier. A T1 that grows mid-build re-ope
 - Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`).
 - One slice = one branch = one PR. Protected `main`, no `develop`.
 - Every behavior change gets a test before merge (T2: test-first, RED→GREEN).
+
+## Test fixtures — invented data only
+- Every fixture (issues, tasks, users, e-mails, URLs, tokens) is invented: `acme.atlassian.net`,
+  `PROJ-*`, `jane@example.com`, `tok-123-secret`. **Never** paste real Jira exports, issue text,
+  account ids or tokens into the repo — not even redacted.
+- Jira is never called from tests: use `test/fixtures/fake-jira.js` (in-memory, plus a `fetch`
+  emulator for the Cloud client). Backlog.md is the fake `test/fixtures/bin/backlog`, or the real
+  `backlog.md` devDependency in `test/e2e.test.js`.

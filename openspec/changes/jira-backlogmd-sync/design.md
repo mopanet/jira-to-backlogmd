@@ -177,6 +177,10 @@ callback line; the state file can be deleted, tasks remain valid Backlog.md task
 
 ## Open Questions
 
-- Which Jira API-token scopes are the exact minimum for Cloud (classic vs granular scopes differ);
-  confirmed during the `doctor` task against the Atlassian docs and recorded in the README.
+- ~~Minimum Jira Cloud token scopes~~ — resolved: a classic (unscoped) API token of a bot user with
+  the project permissions Browse Projects, Transition Issues, Add Comments and Link Issues; in OAuth
+  classic-scope terms `read:jira-work`, `write:jira-work` and `read:jira-user` (for `/myself`).
+  Scoped API tokens are out of scope for this change: they are served through
+  `api.atlassian.com/ex/jira/<cloudId>`, which would split the API base from the browse URL used in
+  references. `doctor` names the missing permission/scope on the transitions check. Recorded in README.
 - ~~Supported Backlog.md version range~~ — resolved: `>=1.54.0 <2` (tested 1.54.0); `doctor` checks it.

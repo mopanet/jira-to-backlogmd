@@ -47,14 +47,14 @@
 ## 8. Operator commands (spec: sync-cli)
 
 - [x] 8.1 Write failing tests for `init` (fresh project scaffold incl. `.gitignore` entry, existing config untouched) then implement until they pass
-- [ ] 8.2 Write failing tests for `doctor` (each check pass/fail, scope failure names the scope, no writes) with fakes, then implement until they pass; confirm and record the minimum Jira Cloud token scopes in README and design.md
+- [x] 8.2 Write failing tests for `doctor` (each check pass/fail, scope failure names the scope, no writes) with fakes, then implement until they pass; confirm and record the minimum Jira Cloud token scopes in README and design.md
 - [x] 8.3 Write failing tests for exit codes (`0/1/2/3`) and unknown-command usage, then implement until they pass
 
 ## 9. Documentation and packaging
 
-- [ ] 9.1 Write README.md: what it does and does not sync, install, `init`/`doctor`/`pull`/`push`/`sync`, systemd timer + cron examples, `onStatusChange` and `autoCommit` setup, supported Backlog.md versions, token scopes, "unofficial / not affiliated with Atlassian" and "imported text is untrusted" notices; verify every documented command runs as written against the fake backlog
-- [ ] 9.2 Write SECURITY.md (reporting, token handling, bot-user recommendation) and update `.dev/CONTRIBUTING.md` with the fixture rule (invented data only); verify gitleaks passes on the tree
-- [ ] 9.3 Keep the LICENSE copyright holder as `mopanet` (confirmed by the user) and verify `npm pack --dry-run` lists only `src/`, `README.md`, `LICENSE`, `SECURITY.md`, `package.json`
+- [x] 9.1 Write README.md: what it does and does not sync, install, `init`/`doctor`/`pull`/`push`/`sync`, systemd timer + cron examples, `onStatusChange` and `autoCommit` setup, supported Backlog.md versions, token scopes, "unofficial / not affiliated with Atlassian" and "imported text is untrusted" notices; verify every documented command runs as written against the fake backlog
+- [x] 9.2 Write SECURITY.md (reporting, token handling, bot-user recommendation) and update `.dev/CONTRIBUTING.md` with the fixture rule (invented data only); verify gitleaks passes on the tree
+- [x] 9.3 Keep the LICENSE copyright holder as `mopanet` (confirmed by the user) and verify `npm pack --dry-run` lists only `src/`, `README.md`, `LICENSE`, `SECURITY.md`, `package.json`
 
 ## 10. Integration
 
