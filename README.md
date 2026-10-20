@@ -34,7 +34,7 @@ not supported yet.
 ## Install and set up
 
 ```bash
-npm install -g jira-to-backlogmd
+npm install -g github:mopanet/jira-to-backlogmd   # not on the npm registry yet
 cd /path/to/your/backlog-project        # the directory that contains backlog/
 jira-to-backlogmd init                   # writes .jira-to-backlogmd/config.json, git-ignores the lock
 $EDITOR .jira-to-backlogmd/config.json   # set jira.projectKey, review statusMapping
