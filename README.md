@@ -210,4 +210,4 @@ use invented data only — see `.dev/CONTRIBUTING.md`.
 
 ## License
 
-MIT © mopanet
+MIT © mOp@NET
