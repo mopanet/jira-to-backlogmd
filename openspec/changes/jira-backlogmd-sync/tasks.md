@@ -28,7 +28,7 @@
 
 ## 5. Jira client and ADF converter
 
-- [ ] 5.1 Write failing tests for `src/jira/adf.js` from fixtures covering every node type named in the `jira-import` description scenarios plus unknown nodes and embedded HTML, then implement the renderer until they pass
+- [x] 5.1 Write failing tests for `src/jira/adf.js` from fixtures covering every node type named in the `jira-import` description scenarios plus unknown nodes and embedded HTML, then implement the renderer until they pass
 - [ ] 5.2 Write failing tests for the Cloud `JiraClient` request builder (basic-auth header, `search/jql` pagination, transitions lookup, comment body in ADF, remote link with `globalId`, 429 backoff honouring `Retry-After`, 5xx retry limit) using an injected fake `fetch`, then implement `src/jira/client.js` until they pass
 - [ ] 5.3 Implement the in-memory `FakeJiraClient` used by the sync tests and verify it satisfies the same interface tests as the Cloud client
 
