@@ -14,8 +14,8 @@
 ## 2. Scaffolding and configuration (spec: sync-config)
 
 - [x] 2.1 Add `bin`, `files`, `engines`, `publishConfig` to package.json, create `src/cli.js` printing usage, and verify `node src/cli.js --help` exits 0 and `npm run gates:dev` passes
-- [ ] 2.2 Write failing tests for every `sync-config` scenario (file + env loading, secret rejection, default JQL, status-mapping validation incl. duplicate detection, assignee mapping, conflict strategy, aggregated errors), then implement `src/config.js` until they pass
-- [ ] 2.3 Add `.env.example` and a commented default `config.json` template used by `init`, and verify the template loads through `config.js` with zero validation errors
+- [x] 2.2 Write failing tests for every `sync-config` scenario (file + env loading, secret rejection, default JQL, status-mapping validation incl. duplicate detection, assignee mapping, conflict strategy, aggregated errors), then implement `src/config.js` until they pass
+- [x] 2.3 Add `.env.example` and a commented default `config.json` template used by `init`, and verify the template loads through `config.js` with zero validation errors
 
 ## 3. Logging and Backlog.md CLI adapter
 
