@@ -19,7 +19,7 @@
 
 ## 3. Logging and Backlog.md CLI adapter
 
-- [ ] 3.1 Write failing tests for `src/log.js` redaction (token value and `Authorization` header shown as `***`, `--verbose` levels), then implement until they pass
+- [x] 3.1 Write failing tests for `src/log.js` redaction (token value and `Authorization` header shown as `***`, `--verbose` levels), then implement until they pass
 - [ ] 3.2 Write failing tests for `src/backlog-cli.js` against a fake `backlog` executable in `test/fixtures/bin` (list/view JSON parsing, create/edit argv construction without a shell, non-zero exit handling, `JIRA_TO_BACKLOGMD_ORIGIN` passed to children), then implement until they pass
 
 ## 4. State store and lock (spec: sync-state)
